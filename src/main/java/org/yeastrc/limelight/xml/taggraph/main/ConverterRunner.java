@@ -19,7 +19,9 @@
 package org.yeastrc.limelight.xml.taggraph.main;
 
 import org.yeastrc.limelight.xml.taggraph.objects.ConversionParameters;
+import org.yeastrc.limelight.xml.taggraph.objects.TagGraphResults;
 import org.yeastrc.limelight.xml.taggraph.reader.INIFileReader;
+import org.yeastrc.limelight.xml.taggraph.reader.TagGraphResultsReader;
 
 import java.math.BigDecimal;
 import java.util.Collection;
@@ -41,8 +43,9 @@ public class ConverterRunner {
 		System.err.println("Done.");
 
 		// read in the results
-		System.err.println( "\nLoading MetaMorpheus results into memory...");
-		MetamorpheusResults results = MetamorpheusResultsReader.getResults( conversionParameters.getMzidFile() );
+		System.err.print( "\nLoading TAG-GRAPH results into memory... ");
+		TagGraphResults results = TagGraphResultsReader.getTagGraphResults(conversionParameters.getResultsFile(), staticMods, variableMods);
+		System.err.println("Done.");
 
 		// write out the limelight xml
 		System.err.print( "\nWriting out XML..." );
