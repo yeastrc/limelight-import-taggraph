@@ -1,0 +1,53 @@
+/*
+    Build executable jar file with gradle shadowJar
+    More info at: https://imperceptiblethoughts.com/shadow/
+    
+    Requires Gradle 5+
+ */
+
+plugins {
+    id 'com.github.johnrengelman.shadow' version '5.0.0'
+}
+
+apply plugin: 'java'
+apply plugin: 'com.github.johnrengelman.shadow'
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+
+    maven {
+        url 'https://raw.github.com/yeastrc/java-fasta-utils/repository/'
+    }
+    maven {
+        url 'https://raw.github.com/yeastrc/limelight-import-api/repository/'
+    }
+}
+
+dependencies {
+    compile 'org.apache.commons:commons-configuration2:2.4'
+    compile 'org.yeastrc:yrc-fasta-utils:2.0.2'
+    compile 'org.yeastrc:limelight-import-api:0.9.0'
+    compile 'info.picocli:picocli:4.0.0-alpha-1'
+    compile group: 'com.opencsv', name: 'opencsv', version: '4.5'
+}
+
+processResources {
+    from ('src/main/java') {
+        include '**/*.txt'
+    }
+}
+
+jar {
+    manifest {
+        attributes 'Main-Class': 'org.yeastrc.limelight.xml.taggraph.main.MainProgram'
+    }
+}
+
+shadowJar {
+    baseName = 'tagGraph2toLimelightXML'
+    classifier = null
+    version = null
+}
