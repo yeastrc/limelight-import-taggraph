@@ -1,15 +1,16 @@
 package org.yeastrc.limelight.xml.taggraph.builder;
 
-import org.yeastrc.fasta.FASTAEntry;
-import org.yeastrc.fasta.FASTAHeader;
-import org.yeastrc.fasta.FASTAReader;
+
 import org.yeastrc.limelight.limelight_import.api.xml_dto.LimelightInput;
 import org.yeastrc.limelight.limelight_import.api.xml_dto.MatchedProtein;
 import org.yeastrc.limelight.limelight_import.api.xml_dto.MatchedProteinLabel;
 import org.yeastrc.limelight.limelight_import.api.xml_dto.MatchedProteins;
-import org.yeastrc.limelight.xml.cometptm.objects.*;
-import org.yeastrc.limelight.xml.cometptm.objects.CometReportedPeptide;
-import org.yeastrc.limelight.xml.cometptm.utils.ReportedPeptideUtils;
+import org.yeastrc.limelight.xml.taggraph.objects.TagGraphReportedPeptide;
+import org.yeastrc.limelight.xml.taggraph.objects.TagGraphResults;
+import org.yeastrc.proteomics.fasta.FASTAEntry;
+import org.yeastrc.proteomics.fasta.FASTAFileParser;
+import org.yeastrc.proteomics.fasta.FASTAFileParserFactory;
+import org.yeastrc.proteomics.fasta.FASTAHeader;
 
 import java.io.File;
 import java.math.BigInteger;
@@ -30,7 +31,7 @@ import java.util.Map;
  */
 public class MatchedProteinsBuilder {
 
-	public static org.yeastrc.limelight.xml.cometptm.builder.MatchedProteinsBuilder getInstance() { return new org.yeastrc.limelight.xml.cometptm.builder.MatchedProteinsBuilder(); }
+	public static MatchedProteinsBuilder getInstance() { return new MatchedProteinsBuilder(); }
 
 	/**
 	 * Add all target proteins from the FASTA file that contain any of the peptides found in the experiment
@@ -38,24 +39,20 @@ public class MatchedProteinsBuilder {
 	 *
 	 * @param limelightInputRoot
 	 * @param fastaFile
-	 * @param cometResults
-	 * @param decoyString
+	 * @param results
 	 * @throws Exception
 	 */
-	public void buildMatchedProteins( LimelightInput limelightInputRoot, File fastaFile, CometResults cometResults, String decoyString ) throws Exception {
+	public void buildMatchedProteins(LimelightInput limelightInputRoot, File fastaFile, TagGraphResults results) throws Exception {
 
 		System.err.print( " Matching peptides to proteins..." );
 
-		Collection<CometReportedPeptide> reportedPeptides = cometResults.getPeptidePSMMap().keySet();
+		Collection<TagGraphReportedPeptide> reportedPeptides = results.getPeptidePSMMap().keySet();
 
 		// process the reported peptides to get naked peptide objects
-		Collection<PeptideObject> nakedPeptideObjects = getNakedPeptideObjectsForReportedPeptides( reportedPeptides, cometResults );
+		Collection<PeptideObject> nakedPeptideObjects = getNakedPeptideObjectsForReportedPeptides( reportedPeptides, results );
 
 		// find the proteins matched by any of these peptides
 		Map<String, Collection<FastaProteinAnnotation>> proteins = getProteins( nakedPeptideObjects, fastaFile );
-
-		// remove all decoy annotations from proteins
-		proteins = removeDecoyAnnotationsFromProteins( proteins, decoyString );
 
 		// create the XML and add to root element
 		buildAndAddMatchedProteinsToXML( limelightInputRoot, proteins );
@@ -63,16 +60,11 @@ public class MatchedProteinsBuilder {
 	}
 
 
-	private Collection<PeptideObject> getNakedPeptideObjectsForReportedPeptides( Collection<CometReportedPeptide> cometPeptides, CometResults cometResults ) {
+	private Collection<PeptideObject> getNakedPeptideObjectsForReportedPeptides( Collection<TagGraphReportedPeptide> reportedPeptides, TagGraphResults results ) {
 
 		Collection<PeptideObject> nakedPeptideObjects = new HashSet<>();
 
-		for( CometReportedPeptide reportedPeptide : cometPeptides ) {
-
-			// skip this if it only contains decoys
-			if(ReportedPeptideUtils.reportedPeptideOnlyContainsDecoys( cometResults, reportedPeptide ) ) {
-				continue;
-			}
+		for( TagGraphReportedPeptide reportedPeptide : reportedPeptides ) {
 
 			PeptideObject nakedPeptideObject = new PeptideObject();
 			nakedPeptideObject.setFoundMatchingProtein( false );
@@ -164,15 +156,12 @@ public class MatchedProteinsBuilder {
 
 		Map<String, Collection<FastaProteinAnnotation>> proteinAnnotations = new HashMap<>();
 
-		FASTAReader fastaReader = null;
+		try ( FASTAFileParser parser = FASTAFileParserFactory.getInstance().getFASTAFileParser(  fastaFile ) ) {
 
-		try {
-
-			fastaReader = FASTAReader.getInstance( fastaFile );
 			int count = 0;
 			System.err.println( "" );
 
-			for( FASTAEntry entry = fastaReader.readNext(); entry != null; entry = fastaReader.readNext() ) {
+			for (FASTAEntry entry = parser.getNextEntry(); entry != null; entry = parser.getNextEntry() ) {
 
 				count++;
 				boolean foundPeptideForFASTAEntry = false;
@@ -242,11 +231,6 @@ public class MatchedProteinsBuilder {
 			System.err.print( "\n" );
 
 
-		} finally {
-			if( fastaReader != null ) {
-				fastaReader.close();
-				fastaReader = null;
-			}
 		}
 
 		return proteinAnnotations;
@@ -304,8 +288,8 @@ public class MatchedProteinsBuilder {
 			return true;
 		}
 
-		private org.yeastrc.limelight.xml.cometptm.builder.MatchedProteinsBuilder getOuterType() {
-			return org.yeastrc.limelight.xml.cometptm.builder.MatchedProteinsBuilder.this;
+		private MatchedProteinsBuilder getOuterType() {
+			return MatchedProteinsBuilder.this;
 		}
 
 		/**
@@ -431,8 +415,8 @@ public class MatchedProteinsBuilder {
 		private String name;
 		private String description;
 		private Integer taxonomId;
-		private org.yeastrc.limelight.xml.cometptm.builder.MatchedProteinsBuilder getOuterType() {
-			return org.yeastrc.limelight.xml.cometptm.builder.MatchedProteinsBuilder.this;
+		private MatchedProteinsBuilder getOuterType() {
+			return MatchedProteinsBuilder.this;
 		}
 
 	}

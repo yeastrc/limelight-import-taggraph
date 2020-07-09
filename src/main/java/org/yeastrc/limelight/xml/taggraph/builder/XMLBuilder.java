@@ -9,9 +9,11 @@ import org.yeastrc.limelight.xml.taggraph.annotations.PSMAnnotationTypes;
 import org.yeastrc.limelight.xml.taggraph.annotations.PSMDefaultVisibleAnnotationTypes;
 import org.yeastrc.limelight.xml.taggraph.constants.Constants;
 import org.yeastrc.limelight.xml.taggraph.objects.ConversionParameters;
+import org.yeastrc.limelight.xml.taggraph.objects.TagGraphPSM;
 import org.yeastrc.limelight.xml.taggraph.objects.TagGraphReportedPeptide;
 import org.yeastrc.limelight.xml.taggraph.objects.TagGraphResults;
 
+import java.io.File;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.MathContext;
@@ -152,106 +154,102 @@ public class XMLBuilder {
 
 			// iterate over all PSMs for this reported peptide
 
-			for( int scanNumber : cometResults.getPeptidePSMMap().get(reportedPeptide).keySet() ) {
-
-				CometPSM psm = cometResults.getPeptidePSMMap().get(reportedPeptide).get( scanNumber );
-
-				// skip this PSM if it's a decoy
-				if( psm.getDecoy() ) {
-					continue;
-				}
+			for( TagGraphPSM psm : results.getPeptidePSMMap().get(reportedPeptide) ) {
 
 				Psm xmlPsm = new Psm();
 				xmlPsms.getPsm().add( xmlPsm );
 
-				xmlPsm.setScanNumber( new BigInteger( String.valueOf( scanNumber ) ) );
+				xmlPsm.setScanNumber(BigInteger.valueOf(psm.getScanNumber()));
 				xmlPsm.setPrecursorCharge( new BigInteger( String.valueOf( psm.getCharge() ) ) );
+				xmlPsm.setScanFileName(psm.getScanFilePrefix());
 
 				// add in the filterable PSM annotations (e.g., score)
 				FilterablePsmAnnotations xmlFilterablePsmAnnotations = new FilterablePsmAnnotations();
 				xmlPsm.setFilterablePsmAnnotations( xmlFilterablePsmAnnotations );
 
-				// handle comet PTM scores
+				// scores
+
 				{
 					FilterablePsmAnnotation xmlFilterablePsmAnnotation = new FilterablePsmAnnotation();
 					xmlFilterablePsmAnnotations.getFilterablePsmAnnotation().add( xmlFilterablePsmAnnotation );
 
-					xmlFilterablePsmAnnotation.setAnnotationName( PSMAnnotationTypes.COMET_ANNOTATION_TYPE_FDR );
-					xmlFilterablePsmAnnotation.setSearchProgram( Constants.PROGRAM_NAME_COMET_PTM );
-
-
-					DecimalFormat formatter = new DecimalFormat("0.###E0");
-
-					double fdr = targetDecoyAnalysis.getFDRForScore( psm.getEvalue() );
-
-					BigDecimal bd = BigDecimal.valueOf( fdr );
-					bd = bd.round( new MathContext( 3 ) );
-
-					xmlFilterablePsmAnnotation.setValue( bd );
+					xmlFilterablePsmAnnotation.setAnnotationName( PSMAnnotationTypes.ANNOTATION_TYPE_FDR );
+					xmlFilterablePsmAnnotation.setSearchProgram( Constants.PROGRAM_NAME );
+					xmlFilterablePsmAnnotation.setValue( psm.getFdr() );
 				}
 
 				{
 					FilterablePsmAnnotation xmlFilterablePsmAnnotation = new FilterablePsmAnnotation();
 					xmlFilterablePsmAnnotations.getFilterablePsmAnnotation().add( xmlFilterablePsmAnnotation );
 
-					xmlFilterablePsmAnnotation.setAnnotationName( PSMAnnotationTypes.COMET_ANNOTATION_TYPE_EVALUE );
-					xmlFilterablePsmAnnotation.setSearchProgram( Constants.PROGRAM_NAME_COMET_PTM );
-					xmlFilterablePsmAnnotation.setValue( psm.getEvalue() );
+					xmlFilterablePsmAnnotation.setAnnotationName( PSMAnnotationTypes.ANNOTATION_TYPE_EM_PROB );
+					xmlFilterablePsmAnnotation.setSearchProgram( Constants.PROGRAM_NAME );
+					xmlFilterablePsmAnnotation.setValue( psm.getEmProbability() );
 				}
 
 				{
 					FilterablePsmAnnotation xmlFilterablePsmAnnotation = new FilterablePsmAnnotation();
 					xmlFilterablePsmAnnotations.getFilterablePsmAnnotation().add( xmlFilterablePsmAnnotation );
 
-					xmlFilterablePsmAnnotation.setAnnotationName( PSMAnnotationTypes.COMET_ANNOTATION_TYPE_DELTACN );
-					xmlFilterablePsmAnnotation.setSearchProgram( Constants.PROGRAM_NAME_COMET_PTM );
-					xmlFilterablePsmAnnotation.setValue( psm.getDeltaCn() );
+					xmlFilterablePsmAnnotation.setAnnotationName( PSMAnnotationTypes.ANNOTATION_TYPE_ONE_MINUS_EM );
+					xmlFilterablePsmAnnotation.setSearchProgram( Constants.PROGRAM_NAME );
+					xmlFilterablePsmAnnotation.setValue( psm.getOneMinusLog10Em() );
 				}
 
 				{
 					FilterablePsmAnnotation xmlFilterablePsmAnnotation = new FilterablePsmAnnotation();
 					xmlFilterablePsmAnnotations.getFilterablePsmAnnotation().add( xmlFilterablePsmAnnotation );
 
-					xmlFilterablePsmAnnotation.setAnnotationName( PSMAnnotationTypes.COMET_ANNOTATION_TYPE_DELTACNSTAR );
-					xmlFilterablePsmAnnotation.setSearchProgram( Constants.PROGRAM_NAME_COMET_PTM );
-					xmlFilterablePsmAnnotation.setValue( psm.getDeltaCnStar() );
+					xmlFilterablePsmAnnotation.setAnnotationName( PSMAnnotationTypes.ANNOTATION_TYPE_ALIGNMENT_SCORE );
+					xmlFilterablePsmAnnotation.setSearchProgram( Constants.PROGRAM_NAME );
+					xmlFilterablePsmAnnotation.setValue( psm.getAlignmentScore() );
 				}
 
 				{
 					FilterablePsmAnnotation xmlFilterablePsmAnnotation = new FilterablePsmAnnotation();
 					xmlFilterablePsmAnnotations.getFilterablePsmAnnotation().add( xmlFilterablePsmAnnotation );
 
-					xmlFilterablePsmAnnotation.setAnnotationName( PSMAnnotationTypes.COMET_ANNOTATION_TYPE_MASSDIFF );
-					xmlFilterablePsmAnnotation.setSearchProgram( Constants.PROGRAM_NAME_COMET_PTM );
-					xmlFilterablePsmAnnotation.setValue( psm.getMassDiff() );
+					xmlFilterablePsmAnnotation.setAnnotationName( PSMAnnotationTypes.ANNOTATION_TYPE_COMPOSITE_SCORE );
+					xmlFilterablePsmAnnotation.setSearchProgram( Constants.PROGRAM_NAME );
+					xmlFilterablePsmAnnotation.setValue( psm.getCompositeScore() );
 				}
 
 				{
 					FilterablePsmAnnotation xmlFilterablePsmAnnotation = new FilterablePsmAnnotation();
 					xmlFilterablePsmAnnotations.getFilterablePsmAnnotation().add( xmlFilterablePsmAnnotation );
 
-					xmlFilterablePsmAnnotation.setAnnotationName( PSMAnnotationTypes.COMET_ANNOTATION_TYPE_SPRANK );
-					xmlFilterablePsmAnnotation.setSearchProgram( Constants.PROGRAM_NAME_COMET_PTM );
-					xmlFilterablePsmAnnotation.setValue( psm.getSprank() );
+					xmlFilterablePsmAnnotation.setAnnotationName( PSMAnnotationTypes.ANNOTATION_TYPE_OBS_MH );
+					xmlFilterablePsmAnnotation.setSearchProgram( Constants.PROGRAM_NAME );
+					xmlFilterablePsmAnnotation.setValue( psm.getObsMH() );
 				}
 
 				{
 					FilterablePsmAnnotation xmlFilterablePsmAnnotation = new FilterablePsmAnnotation();
 					xmlFilterablePsmAnnotations.getFilterablePsmAnnotation().add( xmlFilterablePsmAnnotation );
 
-					xmlFilterablePsmAnnotation.setAnnotationName( PSMAnnotationTypes.COMET_ANNOTATION_TYPE_SPSCORE );
-					xmlFilterablePsmAnnotation.setSearchProgram( Constants.PROGRAM_NAME_COMET_PTM );
-					xmlFilterablePsmAnnotation.setValue( psm.getSpscore() );
+					xmlFilterablePsmAnnotation.setAnnotationName( PSMAnnotationTypes.ANNOTATION_TYPE_PPM );
+					xmlFilterablePsmAnnotation.setSearchProgram( Constants.PROGRAM_NAME );
+					xmlFilterablePsmAnnotation.setValue( psm.getPpm() );
 				}
 
 				{
 					FilterablePsmAnnotation xmlFilterablePsmAnnotation = new FilterablePsmAnnotation();
 					xmlFilterablePsmAnnotations.getFilterablePsmAnnotation().add( xmlFilterablePsmAnnotation );
 
-					xmlFilterablePsmAnnotation.setAnnotationName( PSMAnnotationTypes.COMET_ANNOTATION_TYPE_XCORR );
-					xmlFilterablePsmAnnotation.setSearchProgram( Constants.PROGRAM_NAME_COMET_PTM );
-					xmlFilterablePsmAnnotation.setValue( psm.getXcorr() );
+					xmlFilterablePsmAnnotation.setAnnotationName( PSMAnnotationTypes.ANNOTATION_TYPE_SPECTRUM_SCORE );
+					xmlFilterablePsmAnnotation.setSearchProgram( Constants.PROGRAM_NAME );
+					xmlFilterablePsmAnnotation.setValue( psm.getSpectrumScore() );
 				}
+
+				{
+					FilterablePsmAnnotation xmlFilterablePsmAnnotation = new FilterablePsmAnnotation();
+					xmlFilterablePsmAnnotations.getFilterablePsmAnnotation().add( xmlFilterablePsmAnnotation );
+
+					xmlFilterablePsmAnnotation.setAnnotationName( PSMAnnotationTypes.ANNOTATION_TYPE_THEO_MH );
+					xmlFilterablePsmAnnotation.setSearchProgram( Constants.PROGRAM_NAME );
+					xmlFilterablePsmAnnotation.setValue( psm.getTheoMH() );
+				}
+
 
 
 				// add in the mods for this psm
@@ -269,12 +267,12 @@ public class XMLBuilder {
 					}
 				}
 
-				// add in open mod for this PSM
-				{
-					PsmOpenModification xmlPsmOpenMod = new PsmOpenModification();
-					xmlPsmOpenMod.setMass(psm.getMassDiff());
-					xmlPsm.setPsmOpenModification(xmlPsmOpenMod);
-				}
+//				// add in open mod for this PSM
+//				{
+//					PsmOpenModification xmlPsmOpenMod = new PsmOpenModification();
+//					xmlPsmOpenMod.setMass(psm.getMassDiff());
+//					xmlPsm.setPsmOpenModification(xmlPsmOpenMod);
+//				}
 				
 				
 			}// end iterating over psms for a reported peptide
@@ -288,8 +286,7 @@ public class XMLBuilder {
 		MatchedProteinsBuilder.getInstance().buildMatchedProteins(
 				                                                   limelightInputRoot,
 				                                                   conversionParameters.getFastaFile(),
-																   cometResults,
-																   DecoyUtils.getDecoyPrefixToUse( cometTPPParameters, conversionParameters )
+																   results
 				                                                  );
 		
 		
@@ -300,13 +297,13 @@ public class XMLBuilder {
 		ConfigurationFile xmlConfigurationFile = new ConfigurationFile();
 		xmlConfigurationFiles.getConfigurationFile().add( xmlConfigurationFile );
 		
-		xmlConfigurationFile.setSearchProgram( Constants.PROGRAM_NAME_COMET_PTM );
-		xmlConfigurationFile.setFileName( conversionParameters.getFonfFile().getName() );
-		xmlConfigurationFile.setFileContent( Files.readAllBytes( FileSystems.getDefault().getPath( conversionParameters.getFonfFile().getAbsolutePath() ) ) );
+		xmlConfigurationFile.setSearchProgram( Constants.PROGRAM_NAME );
+		xmlConfigurationFile.setFileName( conversionParameters.getIniFile().getName() );
+		xmlConfigurationFile.setFileContent( Files.readAllBytes( FileSystems.getDefault().getPath( conversionParameters.getIniFile().getAbsolutePath() ) ) );
 		
 		
 		//make the xml file
-		CreateImportFileFromJavaObjectsMain.getInstance().createImportFileFromJavaObjectsMain( conversionParameters.getLimelightXMLOutputFile(), limelightInputRoot);
+		CreateImportFileFromJavaObjectsMain.getInstance().createImportFileFromJavaObjectsMain( new File(conversionParameters.getOutputFilePath()), limelightInputRoot);
 		
 	}
 

@@ -6,6 +6,9 @@ import org.yeastrc.limelight.xml.taggraph.objects.TagGraphReportedPeptide;
 import org.yeastrc.limelight.xml.taggraph.objects.TagGraphResults;
 import org.yeastrc.limelight.xml.taggraph.utils.ReportedPeptideUtils;
 import org.yeastrc.limelight.xml.taggraph.utils.ScanParsingUtils;
+import org.yeastrc.proteomics.mass.MassUtils;
+import org.yeastrc.proteomics.peptide.aminoacid.AminoAcid;
+import org.yeastrc.proteomics.peptide.aminoacid.AminoAcidUtils;
 
 import java.io.File;
 import java.io.FileReader;
@@ -15,6 +18,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class TagGraphResultsReader {
 
@@ -81,7 +86,7 @@ public class TagGraphResultsReader {
             return null;
 
         if( this.csvReader == null ) {
-            this.csvReader = new CSVReader( new FileReader( this.resultsFile ) );
+            this.csvReader = new CSVReader( new FileReader( this.resultsFile ), '\t' );
 
             this.csvReader.readNext();	// throw away header
         }
@@ -111,16 +116,65 @@ public class TagGraphResultsReader {
         psm.setAlignmentScore(new BigDecimal(fields[13]));
         psm.setCompositeScore(new BigDecimal(fields[14]));
 
-        psm.setPeptideSequence(getPeptideSequenceForPSM(fields[29]));
+        psm.setPeptideSequence(getPeptideSequenceForPSM(fields[18]));
         psm.setModifications(getModsForPSM(fields, psm.getPeptideSequence()));
 
         return psm;
     }
 
+    /**
+     * Return true if this string represents an amino acid sub. in the form of "phe->ala"
+     * @param modString
+     * @return
+     */
+    private boolean isAminoAcidSubstitution(String modString) {
+        Pattern p = Pattern.compile("^\\w{3}->\\w{3}$");
+        Matcher m = p.matcher(modString);
+        return m.matches();
+    }
+
+    /**
+     * Get the mass diff corresponding to the given amino acid substitution
+     * @param modString
+     * @return
+     * @throws Exception
+     */
+    private BigDecimal getAminoAcidSubstitutionMassShift(String modString) throws Exception {
+        String[] aminoAcids = modString.split("->");
+        if(aminoAcids.length != 2) {
+            throw new Exception("Got invalid syntax for amino acid subst.: " + modString);
+        }
+
+        AminoAcid startAminoAcid = AminoAcidUtils.getAminoAcidByAbbreviation(aminoAcids[0].toLowerCase());
+        AminoAcid endAminoAcid = AminoAcidUtils.getAminoAcidByAbbreviation(aminoAcids[1].toLowerCase());
+
+        if(startAminoAcid == null) {
+            throw new Exception("Could not find amino acid for: " + aminoAcids[0]);
+        }
+
+        if(endAminoAcid == null) {
+            throw new Exception("Could not find amino acid for: " + aminoAcids[1]);
+        }
+
+        double massDiff = endAminoAcid.getMass(MassUtils.MassType.MONOISOTOPIC) - startAminoAcid.getMass(MassUtils.MassType.MONOISOTOPIC);
+        return BigDecimal.valueOf(massDiff).setScale(4, RoundingMode.HALF_UP);
+    }
+
+    /**
+     * Get the dynamic mods reported for this PSM
+     *
+     * @param fields
+     * @param sequence
+     * @return
+     * @throws Exception
+     */
     private Map<Integer, BigDecimal> getModsForPSM(String[] fields, String sequence) throws Exception {
 
         final int startingIndex = 31;
         Map<Integer, BigDecimal> mods = new HashMap<>();
+
+        System.out.println(fields[18]);
+        System.out.println(fields[29]);
 
         for(int i = startingIndex; i < fields.length; i += 4) {
 
@@ -129,13 +183,19 @@ public class TagGraphResultsReader {
                 break;
             }
 
-            // this mod has no mass associated with it
-            if(fields[i+3] == null || fields[i+3].length() < 1) {
-                continue;
-            }
-
             int position = Integer.parseInt(fields[i]) + 1;
-            BigDecimal mass = new BigDecimal(fields[i+3]);
+
+            BigDecimal mass = null;
+
+            System.out.println(fields[i]);
+            System.out.println(fields[i+1]);
+            System.out.println(fields[i+2]);
+            System.out.println(fields[i+3]);
+            System.out.println(sequence + "\n");
+            if(!isAminoAcidSubstitution(fields[i+1]))
+                mass = new BigDecimal(fields[i+3]);
+            else
+                mass = getAminoAcidSubstitutionMassShift(fields[i+1]);
 
             // don't include static mods
             if(isStaticMod(position, mass, sequence))
@@ -160,6 +220,10 @@ public class TagGraphResultsReader {
             return false;
         }
 
+//        if(position == 0 || position == sequence.length() + 1) {
+//            return false;
+//        }
+
         String moddedResidue = sequence.substring(position - 1, position);
 
         if(!this.staticMods.containsKey(moddedResidue))
@@ -169,8 +233,7 @@ public class TagGraphResultsReader {
         BigDecimal mass2 = mass.setScale(2, RoundingMode.HALF_UP);
 
         if(!mass1.equals(mass2)) {
-            throw new Exception("Got a mod on a statically modded residue not equal to static mod mass...\n" +
-                    "Mod mass: " + mass + ", Sequence: " + sequence + ", Position: " + position);
+            return false;
         }
 
         return true;
@@ -178,12 +241,16 @@ public class TagGraphResultsReader {
 
 
     /**
-     * Convert PEP[12.32]TIDE to PEPTIDE and return it
+     * Convert F.PEPTIDE.R to PEPTIDE and return it
      * @param peptideWithMods
      * @return
      */
     private String getPeptideSequenceForPSM(String peptideWithMods) {
-        return peptideWithMods.replaceAll("[^A-Z]", "" );
+
+        peptideWithMods = peptideWithMods.replaceAll("^\\w\\.", "");
+        peptideWithMods = peptideWithMods.replaceAll("\\.\\w$", "");
+
+        return peptideWithMods;
     }
 
     /**
