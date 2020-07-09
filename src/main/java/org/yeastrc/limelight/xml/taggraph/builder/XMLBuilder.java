@@ -4,10 +4,12 @@ import org.yeastrc.limelight.limelight_import.api.xml_dto.*;
 import org.yeastrc.limelight.limelight_import.api.xml_dto.ReportedPeptide.ReportedPeptideAnnotations;
 import org.yeastrc.limelight.limelight_import.api.xml_dto.SearchProgram.PsmAnnotationTypes;
 import org.yeastrc.limelight.limelight_import.create_import_file_from_java_objects.main.CreateImportFileFromJavaObjectsMain;
+import org.yeastrc.limelight.xml.taggraph.annotations.PSMAnnotationTypeSortOrder;
 import org.yeastrc.limelight.xml.taggraph.annotations.PSMAnnotationTypes;
 import org.yeastrc.limelight.xml.taggraph.annotations.PSMDefaultVisibleAnnotationTypes;
 import org.yeastrc.limelight.xml.taggraph.constants.Constants;
 import org.yeastrc.limelight.xml.taggraph.objects.ConversionParameters;
+import org.yeastrc.limelight.xml.taggraph.objects.TagGraphReportedPeptide;
 import org.yeastrc.limelight.xml.taggraph.objects.TagGraphResults;
 
 import java.math.BigDecimal;
@@ -95,16 +97,16 @@ public class XMLBuilder {
 		//
 		// Define the static mods
 		//
-		if( cometTPPParameters.getStaticMods() != null && cometTPPParameters.getStaticMods().keySet().size() > 0 ) {
+		if( staticMods != null && staticMods.keySet().size() > 0 ) {
 			StaticModifications smods = new StaticModifications();
 			limelightInputRoot.setStaticModifications( smods );
 			
 			
-			for( char residue : cometTPPParameters.getStaticMods().keySet() ) {
+			for( String residue : staticMods.keySet() ) {
 				
 				StaticModification xmlSmod = new StaticModification();
 				xmlSmod.setAminoAcid( String.valueOf( residue ) );
-				xmlSmod.setMassChange( BigDecimal.valueOf( cometTPPParameters.getStaticMods().get( residue ) ) );
+				xmlSmod.setMassChange( staticMods.get(residue) );
 				
 				smods.getStaticModification().add( xmlSmod );
 			}
@@ -117,52 +119,42 @@ public class XMLBuilder {
 		limelightInputRoot.setReportedPeptides( reportedPeptides );
 		
 		// iterate over each distinct reported peptide
-		for( CometReportedPeptide cometReportedPeptide : cometResults.getPeptidePSMMap().keySet() ) {
-
-			// skip this reported peptide if it only contains decoys
-			if(ReportedPeptideUtils.reportedPeptideOnlyContainsDecoys( cometResults, cometReportedPeptide ) ) {
-				continue;
-			}
+		for( TagGraphReportedPeptide reportedPeptide : results.getPeptidePSMMap().keySet() ) {
 
 			ReportedPeptide xmlReportedPeptide = new ReportedPeptide();
 			reportedPeptides.getReportedPeptide().add( xmlReportedPeptide );
 			
-			xmlReportedPeptide.setReportedPeptideString( cometReportedPeptide.getReportedPeptideString() );
-			xmlReportedPeptide.setSequence( cometReportedPeptide.getNakedPeptide() );
+			xmlReportedPeptide.setReportedPeptideString( reportedPeptide.getReportedPeptideString() );
+			xmlReportedPeptide.setSequence( reportedPeptide.getNakedPeptide() );
 			
 			// add in the filterable peptide annotations (e.g., q-value)
 			ReportedPeptideAnnotations xmlReportedPeptideAnnotations = new ReportedPeptideAnnotations();
 			xmlReportedPeptide.setReportedPeptideAnnotations( xmlReportedPeptideAnnotations );
 
 			// add in the mods for this peptide
-			if( cometReportedPeptide.getMods() != null && cometReportedPeptide.getMods().keySet().size() > 0 ) {
+			if( reportedPeptide.getMods() != null && reportedPeptide.getMods().keySet().size() > 0 ) {
 
 				PeptideModifications xmlModifications = new PeptideModifications();
 				xmlReportedPeptide.setPeptideModifications( xmlModifications );
 
-				for( int position : cometReportedPeptide.getMods().keySet() ) {
+				for( int position : reportedPeptide.getMods().keySet() ) {
 					PeptideModification xmlModification = new PeptideModification();
 					xmlModifications.getPeptideModification().add( xmlModification );
 
-					xmlModification.setMass( cometReportedPeptide.getMods().get( position ).stripTrailingZeros().setScale( 0, RoundingMode.HALF_UP ) );
+					xmlModification.setMass( reportedPeptide.getMods().get( position ).stripTrailingZeros().setScale( 0, RoundingMode.HALF_UP ) );
 					xmlModification.setPosition( BigInteger.valueOf( position ) );
 				}
 			}
 
-			// add in open mod mass
-			PeptideOpenModification xmlPeptideOpenMod = new PeptideOpenModification();
-			xmlPeptideOpenMod.setMass(cometReportedPeptide.getOpenModMass());
-			xmlReportedPeptide.setPeptideOpenModification(xmlPeptideOpenMod);
-			
 			// add in the PSMs and annotations
 			Psms xmlPsms = new Psms();
 			xmlReportedPeptide.setPsms( xmlPsms );
 
 			// iterate over all PSMs for this reported peptide
 
-			for( int scanNumber : cometResults.getPeptidePSMMap().get(cometReportedPeptide).keySet() ) {
+			for( int scanNumber : cometResults.getPeptidePSMMap().get(reportedPeptide).keySet() ) {
 
-				CometPSM psm = cometResults.getPeptidePSMMap().get(cometReportedPeptide).get( scanNumber );
+				CometPSM psm = cometResults.getPeptidePSMMap().get(reportedPeptide).get( scanNumber );
 
 				// skip this PSM if it's a decoy
 				if( psm.getDecoy() ) {
