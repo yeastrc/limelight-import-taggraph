@@ -18,11 +18,13 @@
 
 package org.yeastrc.limelight.xml.taggraph.main;
 
+import org.yeastrc.limelight.xml.taggraph.builder.XMLBuilder;
 import org.yeastrc.limelight.xml.taggraph.objects.ConversionParameters;
 import org.yeastrc.limelight.xml.taggraph.objects.TagGraphResults;
 import org.yeastrc.limelight.xml.taggraph.reader.INIFileReader;
 import org.yeastrc.limelight.xml.taggraph.reader.TagGraphResultsReader;
 
+import java.io.File;
 import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.Map;
@@ -49,10 +51,13 @@ public class ConverterRunner {
 
 		// write out the limelight xml
 		System.err.print( "\nWriting out XML..." );
-		(new XMLBuilder()).buildAndSaveXML(conversionParameters, results);
+		(new XMLBuilder()).buildAndSaveXML(conversionParameters, staticMods, results);
 		System.err.println( " Done." );
 
 		// validate the limelight xml
+		System.err.print( "Validating Limelight XML..." );
+		LimelightXMLValidator.validateLimelightXML(new File(conversionParameters.getOutputFilePath()));
+		System.err.println( " Done." );
 
 	}
 }

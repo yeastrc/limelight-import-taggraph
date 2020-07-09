@@ -18,13 +18,13 @@
 
 package org.yeastrc.limelight.xml.taggraph.annotations;
 
+import org.yeastrc.limelight.limelight_import.api.xml_dto.DescriptivePsmAnnotationType;
+import org.yeastrc.limelight.limelight_import.api.xml_dto.FilterDirectionType;
+import org.yeastrc.limelight.limelight_import.api.xml_dto.FilterablePsmAnnotationType;
+
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
-
-import org.yeastrc.proxl_import.api.xml_dto.DescriptivePsmAnnotationType;
-import org.yeastrc.proxl_import.api.xml_dto.FilterDirectionType;
-import org.yeastrc.proxl_import.api.xml_dto.FilterablePsmAnnotationType;
 
 public class PSMAnnotationTypes {
 
@@ -53,7 +53,6 @@ public class PSMAnnotationTypes {
 			type.setName( ANNOTATION_TYPE_FDR );
 			type.setDescription( "FDR calculated by TagGraph" );
 			type.setDefaultFilterValue( new BigDecimal( "0.01" ) );
-			type.setDefaultFilter( true );
 			type.setFilterDirection( FilterDirectionType.BELOW );
 			
 			types.add( type );
@@ -63,7 +62,6 @@ public class PSMAnnotationTypes {
 			FilterablePsmAnnotationType type = new FilterablePsmAnnotationType();
 			type.setName( ANNOTATION_TYPE_EM_PROB );
 			type.setDescription( "Probability derived using a hierarchical Bayes Model optimized by expectation maximization (EM)" );
-			type.setDefaultFilter( false );
 			type.setFilterDirection( FilterDirectionType.ABOVE );
 			
 			types.add( type );
@@ -73,7 +71,6 @@ public class PSMAnnotationTypes {
 			FilterablePsmAnnotationType type = new FilterablePsmAnnotationType();
 			type.setName( ANNOTATION_TYPE_ONE_MINUS_EM );
 			type.setDescription( "1-lg10 EM" );
-			type.setDefaultFilter( false );
 			type.setFilterDirection( FilterDirectionType.ABOVE );
 
 			types.add( type );
@@ -83,7 +80,6 @@ public class PSMAnnotationTypes {
 			FilterablePsmAnnotationType type = new FilterablePsmAnnotationType();
 			type.setName( ANNOTATION_TYPE_SPECTRUM_SCORE );
 			type.setDescription( "Spectrum score" );
-			type.setDefaultFilter( false );
 			type.setFilterDirection( FilterDirectionType.ABOVE );
 
 			types.add( type );
@@ -93,7 +89,6 @@ public class PSMAnnotationTypes {
 			FilterablePsmAnnotationType type = new FilterablePsmAnnotationType();
 			type.setName( ANNOTATION_TYPE_ALIGNMENT_SCORE );
 			type.setDescription( "Alignment Score" );
-			type.setDefaultFilter( false );
 			type.setFilterDirection( FilterDirectionType.ABOVE );
 
 			types.add( type );
@@ -103,7 +98,6 @@ public class PSMAnnotationTypes {
 			FilterablePsmAnnotationType type = new FilterablePsmAnnotationType();
 			type.setName( ANNOTATION_TYPE_COMPOSITE_SCORE );
 			type.setDescription( "Composite Score" );
-			type.setDefaultFilter( false );
 			type.setFilterDirection( FilterDirectionType.ABOVE );
 
 			types.add( type );

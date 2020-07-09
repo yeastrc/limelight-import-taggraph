@@ -18,11 +18,11 @@
 
 package org.yeastrc.limelight.xml.taggraph.annotations;
 
+import org.yeastrc.limelight.limelight_import.api.xml_dto.SearchAnnotation;
+import org.yeastrc.limelight.xml.taggraph.constants.Constants;
+
 import java.util.ArrayList;
 import java.util.List;
-
-import org.yeastrc.limelight.xml.taggraph.reader.PLinkConstants;
-import org.yeastrc.proxl_import.api.xml_dto.SearchAnnotation;
 
 public class PSMDefaultVisibleAnnotationTypes {
 
@@ -36,21 +36,21 @@ public class PSMDefaultVisibleAnnotationTypes {
 		{
 			SearchAnnotation annotation = new SearchAnnotation();
 			annotation.setAnnotationName( PSMAnnotationTypes.ANNOTATION_TYPE_FDR );
-			annotation.setSearchProgram( PLinkConstants.SEARCH_PROGRAM_NAME );
+			annotation.setSearchProgram( Constants.PROGRAM_NAME );
 			annotations.add( annotation );
 		}
 		
 		{
 			SearchAnnotation annotation = new SearchAnnotation();
 			annotation.setAnnotationName( PSMAnnotationTypes.ANNOTATION_TYPE_EM_PROB );
-			annotation.setSearchProgram( PLinkConstants.SEARCH_PROGRAM_NAME );
+			annotation.setSearchProgram( Constants.PROGRAM_NAME );
 			annotations.add( annotation );
 		}
 
 		{
 			SearchAnnotation annotation = new SearchAnnotation();
 			annotation.setAnnotationName( PSMAnnotationTypes.ANNOTATION_TYPE_PPM );
-			annotation.setSearchProgram( PLinkConstants.SEARCH_PROGRAM_NAME );
+			annotation.setSearchProgram( Constants.PROGRAM_NAME );
 			annotations.add( annotation );
 		}
 		

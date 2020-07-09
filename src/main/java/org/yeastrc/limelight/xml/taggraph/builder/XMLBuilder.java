@@ -4,14 +4,11 @@ import org.yeastrc.limelight.limelight_import.api.xml_dto.*;
 import org.yeastrc.limelight.limelight_import.api.xml_dto.ReportedPeptide.ReportedPeptideAnnotations;
 import org.yeastrc.limelight.limelight_import.api.xml_dto.SearchProgram.PsmAnnotationTypes;
 import org.yeastrc.limelight.limelight_import.create_import_file_from_java_objects.main.CreateImportFileFromJavaObjectsMain;
-import org.yeastrc.limelight.xml.cometptm.annotation.PSMAnnotationTypeSortOrder;
-import org.yeastrc.limelight.xml.cometptm.annotation.PSMAnnotationTypes;
-import org.yeastrc.limelight.xml.cometptm.annotation.PSMDefaultVisibleAnnotationTypes;
-import org.yeastrc.limelight.xml.cometptm.constants.Constants;
-import org.yeastrc.limelight.xml.cometptm.objects.*;
-import org.yeastrc.limelight.xml.cometptm.reader.TargetDecoyAnalysis;
-import org.yeastrc.limelight.xml.cometptm.utils.DecoyUtils;
-import org.yeastrc.limelight.xml.cometptm.utils.ReportedPeptideUtils;
+import org.yeastrc.limelight.xml.taggraph.annotations.PSMAnnotationTypes;
+import org.yeastrc.limelight.xml.taggraph.annotations.PSMDefaultVisibleAnnotationTypes;
+import org.yeastrc.limelight.xml.taggraph.constants.Constants;
+import org.yeastrc.limelight.xml.taggraph.objects.ConversionParameters;
+import org.yeastrc.limelight.xml.taggraph.objects.TagGraphResults;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -20,14 +17,14 @@ import java.math.RoundingMode;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.text.DecimalFormat;
+import java.util.Map;
 
 
 public class XMLBuilder {
 
-	public void buildAndSaveXML( ConversionParameters conversionParameters,
-			                     CometResults cometResults,
-			                     CometPTMParameters cometTPPParameters,
-			                     TargetDecoyAnalysis targetDecoyAnalysis )
+	public void buildAndSaveXML(ConversionParameters conversionParameters,
+								Map<String, BigDecimal> staticMods,
+								TagGraphResults results)
     throws Exception {
 
 		LimelightInput limelightInputRoot = new LimelightInput();
@@ -47,13 +44,13 @@ public class XMLBuilder {
 			SearchProgram searchProgram = new SearchProgram();
 			searchPrograms.getSearchProgram().add( searchProgram );
 				
-			searchProgram.setName( Constants.PROGRAM_NAME_COMET_PTM );
-			searchProgram.setDisplayName( Constants.PROGRAM_NAME_COMET_PTM );
-			searchProgram.setVersion( cometResults.getCometVersion() );
+			searchProgram.setName( Constants.PROGRAM_NAME );
+			searchProgram.setDisplayName( Constants.PROGRAM_NAME );
+			searchProgram.setVersion( results.getVersion() );
 			
 			
 			//
-			// Define the annotation types present in magnum data
+			// Define the annotation types present in the data
 			//
 			PsmAnnotationTypes psmAnnotationTypes = new PsmAnnotationTypes();
 			searchProgram.setPsmAnnotationTypes( psmAnnotationTypes );
@@ -61,7 +58,7 @@ public class XMLBuilder {
 			FilterablePsmAnnotationTypes filterablePsmAnnotationTypes = new FilterablePsmAnnotationTypes();
 			psmAnnotationTypes.setFilterablePsmAnnotationTypes( filterablePsmAnnotationTypes );
 			
-			for( FilterablePsmAnnotationType annoType : PSMAnnotationTypes.getFilterablePsmAnnotationTypes( Constants.PROGRAM_NAME_COMET_PTM ) ) {
+			for( FilterablePsmAnnotationType annoType : PSMAnnotationTypes.getFilterablePsmAnnotationTypes() ) {
 				filterablePsmAnnotationTypes.getFilterablePsmAnnotationType().add( annoType );
 			}
 			

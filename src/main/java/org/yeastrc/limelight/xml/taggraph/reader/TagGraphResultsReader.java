@@ -4,6 +4,7 @@ import com.opencsv.CSVReader;
 import org.yeastrc.limelight.xml.taggraph.objects.TagGraphPSM;
 import org.yeastrc.limelight.xml.taggraph.objects.TagGraphReportedPeptide;
 import org.yeastrc.limelight.xml.taggraph.objects.TagGraphResults;
+import org.yeastrc.limelight.xml.taggraph.utils.ReportedPeptideUtils;
 import org.yeastrc.limelight.xml.taggraph.utils.ScanParsingUtils;
 
 import java.io.File;
@@ -66,9 +67,8 @@ public class TagGraphResultsReader {
         return peptidePsmMap;
     }
 
-    private TagGraphReportedPeptide getReportedPeptideForPsm(TagGraphPSM psm) {
-
-        return null;
+    private TagGraphReportedPeptide getReportedPeptideForPsm(TagGraphPSM psm) throws Exception {
+        return ReportedPeptideUtils.getReportedPeptideForPSM(psm);
     }
 
 
