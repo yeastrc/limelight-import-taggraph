@@ -39,8 +39,11 @@ import java.io.InputStreamReader;
 )
 public class MainProgram implements Runnable {
 
-	@CommandLine.Option(names = { "-i", "--ini" }, required = true, description = "The .ini file used to configure TAG-GRAPH. Contains static and diff mods.")
+	@CommandLine.Option(names = { "--taggraph-ini" }, required = true, description = "The .ini file used to configure TAG-GRAPH. Contains static and diff mods.")
 	private File iniFile;
+
+	@CommandLine.Option(names = { "--run-ini" }, required = false, description = "[Optional] The .ini file used to configure how TAG-GRAPH was run. Contains fmindex and output options.")
+	private File runIniFile;
 
 	@CommandLine.Option(names = { "-o", "--out-file" }, required = true, description = "Full path to use for the Limelight XML output file (including file name).")
 	private String outFile;
@@ -65,6 +68,11 @@ public class MainProgram implements Runnable {
 			System.exit( 1 );
 		}
 
+		if(runIniFile != null && !runIniFile.exists()) {
+			System.err.println( "Could not find file: " + runIniFile.getAbsolutePath() );
+			System.exit( 1 );
+		}
+
 		if( !fastaFile.exists() ) {
 			System.err.println( "Could not find file: " + fastaFile.getAbsolutePath() );
 			System.exit( 1 );
@@ -76,7 +84,7 @@ public class MainProgram implements Runnable {
 		}
 
 		ConversionProgramInfo cpi = ConversionProgramInfo.createInstance( String.join( " ",  args ) );
-		ConversionParameters cp = new ConversionParameters(resultsFile, fastaFile, iniFile, outFile, cpi);
+		ConversionParameters cp = new ConversionParameters(resultsFile, fastaFile, iniFile, runIniFile, outFile, cpi);
 
 		try {
 			ConverterRunner.createInstance().convertToLimelightXML(cp);

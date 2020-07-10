@@ -5,11 +5,12 @@ import java.util.List;
 
 public class ConversionParameters {
 
-    public ConversionParameters(File resultsFile, File fastaFile, File iniFile, String outputFilePath, ConversionProgramInfo conversionProgramInfo) {
+    public ConversionParameters(File resultsFile, File fastaFile, File iniFile, File runIniFile, String outputFilePath, ConversionProgramInfo conversionProgramInfo) {
         this.outputFilePath = outputFilePath;
         this.conversionProgramInfo = conversionProgramInfo;
         this.resultsFile = resultsFile;
         this.iniFile = iniFile;
+        this.runIniFile = runIniFile;
         this.fastaFile = fastaFile;
     }
 
@@ -33,10 +34,15 @@ public class ConversionParameters {
         return resultsFile;
     }
 
+    public File getRunIniFile() {
+        return runIniFile;
+    }
+
     private String outputFilePath;
     private ConversionProgramInfo conversionProgramInfo;
     private File fastaFile;
     private File iniFile;
+    private File runIniFile;
     private File resultsFile;
 
 }

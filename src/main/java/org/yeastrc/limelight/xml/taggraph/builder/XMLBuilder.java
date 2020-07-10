@@ -315,13 +315,24 @@ public class XMLBuilder {
 		// add in the config file(s)
 		ConfigurationFiles xmlConfigurationFiles = new ConfigurationFiles();
 		limelightInputRoot.setConfigurationFiles( xmlConfigurationFiles );
-		
-		ConfigurationFile xmlConfigurationFile = new ConfigurationFile();
-		xmlConfigurationFiles.getConfigurationFile().add( xmlConfigurationFile );
-		
-		xmlConfigurationFile.setSearchProgram( Constants.PROGRAM_NAME );
-		xmlConfigurationFile.setFileName( conversionParameters.getIniFile().getName() );
-		xmlConfigurationFile.setFileContent( Files.readAllBytes( FileSystems.getDefault().getPath( conversionParameters.getIniFile().getAbsolutePath() ) ) );
+
+		{
+			ConfigurationFile xmlConfigurationFile = new ConfigurationFile();
+			xmlConfigurationFiles.getConfigurationFile().add(xmlConfigurationFile);
+
+			xmlConfigurationFile.setSearchProgram(Constants.PROGRAM_NAME);
+			xmlConfigurationFile.setFileName(conversionParameters.getIniFile().getName());
+			xmlConfigurationFile.setFileContent(Files.readAllBytes(FileSystems.getDefault().getPath(conversionParameters.getIniFile().getAbsolutePath())));
+		}
+
+		if(conversionParameters.getRunIniFile() != null) {
+			ConfigurationFile xmlConfigurationFile = new ConfigurationFile();
+			xmlConfigurationFiles.getConfigurationFile().add(xmlConfigurationFile);
+
+			xmlConfigurationFile.setSearchProgram(Constants.PROGRAM_NAME);
+			xmlConfigurationFile.setFileName(conversionParameters.getRunIniFile().getName());
+			xmlConfigurationFile.setFileContent(Files.readAllBytes(FileSystems.getDefault().getPath(conversionParameters.getRunIniFile().getAbsolutePath())));
+		}
 		
 		
 		//make the xml file
