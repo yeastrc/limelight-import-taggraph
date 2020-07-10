@@ -8,17 +8,12 @@ import org.yeastrc.limelight.xml.taggraph.objects.TagGraphReportedPeptide;
 import org.yeastrc.limelight.xml.taggraph.objects.TagGraphResults;
 import org.yeastrc.limelight.xml.taggraph.utils.ReportedPeptideUtils;
 import org.yeastrc.limelight.xml.taggraph.utils.ScanParsingUtils;
-import org.yeastrc.proteomics.mass.MassUtils;
-import org.yeastrc.proteomics.peptide.aminoacid.AminoAcid;
-import org.yeastrc.proteomics.peptide.aminoacid.AminoAcidUtils;
 
 import java.io.File;
 import java.io.FileReader;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class TagGraphResultsReader {
 
