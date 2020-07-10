@@ -1,4 +1,4 @@
 TagGraph to Limelight XML Converter
 ==================================
 
-Note: This converter is not done--do not use.
+Converter is currently experimental, use at own risk.
