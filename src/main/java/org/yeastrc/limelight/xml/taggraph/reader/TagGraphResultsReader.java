@@ -157,6 +157,9 @@ public class TagGraphResultsReader {
                 }
             }
 
+            if(modMassError == null)
+                modMassError = 0.0;
+
             modMass = modMass + modMassError;
 
             if(modMass == 0.0) {
