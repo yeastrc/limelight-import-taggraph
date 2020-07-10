@@ -119,7 +119,8 @@ public class TagGraphResultsReader {
 
 
     /**
-     * Get the dynamic mods reported for this PSM
+     * Get the dynamic mods reported for this PSM. The python data structure being parsed is:
+     * [(('Insertion', 345.172225, 0), 'VVM', 0), (('Ala->Arg', 85.063997, 0.0), ('A', 'Anywhere'), 3)]
      *
      * @param sequence
      * @return
@@ -138,12 +139,25 @@ public class TagGraphResultsReader {
         for(List individualModList : modList ) {
             List<Object> modDefinition = (List)individualModList.get(0);
             Double modMass = null;
+            Double modMassError = 0.0;
 
             try {
-                modMass = (Double) (modDefinition.get(1));
+                modMass = (Double)(modDefinition.get(1));
             } catch(Exception e) {
                 modMass = Double.valueOf((Integer)(modDefinition.get(1)));
             }
+
+            try {
+                modMassError = (Double)(modDefinition.get(2));
+            } catch(Exception e) {
+                try {
+                    modMassError = Double.valueOf((Integer) (modDefinition.get(2)));
+                } catch(Exception e2) {
+                    ;
+                }
+            }
+
+            modMass = modMass + modMassError;
 
             if(modMass == 0.0) {
                 continue;
