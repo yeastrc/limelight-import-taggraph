@@ -65,8 +65,13 @@ public class XMLBuilder {
 			for( FilterablePsmAnnotationType annoType : PSMAnnotationTypes.getFilterablePsmAnnotationTypes() ) {
 				filterablePsmAnnotationTypes.getFilterablePsmAnnotationType().add( annoType );
 			}
-			
-			//todo: add in non-filterable annotations
+
+			DescriptivePsmAnnotationTypes descriptivePsmAnnotationTypes = new DescriptivePsmAnnotationTypes();
+			psmAnnotationTypes.setDescriptivePsmAnnotationTypes(descriptivePsmAnnotationTypes);
+
+			for( DescriptivePsmAnnotationType annoType : PSMAnnotationTypes.getDescriptivePsmAnnotationTypes() ) {
+				descriptivePsmAnnotationTypes.getDescriptivePsmAnnotationType().add( annoType );
+			}
 		}
 		
 		
@@ -144,7 +149,14 @@ public class XMLBuilder {
 					xmlModifications.getPeptideModification().add( xmlModification );
 
 					xmlModification.setMass( reportedPeptide.getMods().get( position ).stripTrailingZeros().setScale( 0, RoundingMode.HALF_UP ) );
-					xmlModification.setPosition( BigInteger.valueOf( position ) );
+
+					if(position == 0) {
+						xmlModification.setIsNTerminal( true );
+					} else if(position == reportedPeptide.getNakedPeptide().length() + 1) {
+						xmlModification.setIsCTerminal( true );
+					} else {
+						xmlModification.setPosition(BigInteger.valueOf(position));
+					}
 				}
 			}
 
@@ -218,15 +230,6 @@ public class XMLBuilder {
 					FilterablePsmAnnotation xmlFilterablePsmAnnotation = new FilterablePsmAnnotation();
 					xmlFilterablePsmAnnotations.getFilterablePsmAnnotation().add( xmlFilterablePsmAnnotation );
 
-					xmlFilterablePsmAnnotation.setAnnotationName( PSMAnnotationTypes.ANNOTATION_TYPE_OBS_MH );
-					xmlFilterablePsmAnnotation.setSearchProgram( Constants.PROGRAM_NAME );
-					xmlFilterablePsmAnnotation.setValue( psm.getObsMH() );
-				}
-
-				{
-					FilterablePsmAnnotation xmlFilterablePsmAnnotation = new FilterablePsmAnnotation();
-					xmlFilterablePsmAnnotations.getFilterablePsmAnnotation().add( xmlFilterablePsmAnnotation );
-
 					xmlFilterablePsmAnnotation.setAnnotationName( PSMAnnotationTypes.ANNOTATION_TYPE_PPM );
 					xmlFilterablePsmAnnotation.setSearchProgram( Constants.PROGRAM_NAME );
 					xmlFilterablePsmAnnotation.setValue( psm.getPpm() );
@@ -241,16 +244,28 @@ public class XMLBuilder {
 					xmlFilterablePsmAnnotation.setValue( psm.getSpectrumScore() );
 				}
 
-				{
-					FilterablePsmAnnotation xmlFilterablePsmAnnotation = new FilterablePsmAnnotation();
-					xmlFilterablePsmAnnotations.getFilterablePsmAnnotation().add( xmlFilterablePsmAnnotation );
 
-					xmlFilterablePsmAnnotation.setAnnotationName( PSMAnnotationTypes.ANNOTATION_TYPE_THEO_MH );
-					xmlFilterablePsmAnnotation.setSearchProgram( Constants.PROGRAM_NAME );
-					xmlFilterablePsmAnnotation.setValue( psm.getTheoMH() );
+				// add in the filterable PSM annotations (e.g., score)
+				DescriptivePsmAnnotations xmlDescriptivePsmAnnotations = new DescriptivePsmAnnotations();
+				xmlPsm.setDescriptivePsmAnnotations( xmlDescriptivePsmAnnotations );
+
+				{
+					DescriptivePsmAnnotation xmlDescriptivePsmAnnotation = new DescriptivePsmAnnotation();
+					xmlDescriptivePsmAnnotations.getDescriptivePsmAnnotation().add( xmlDescriptivePsmAnnotation );
+
+					xmlDescriptivePsmAnnotation.setAnnotationName( PSMAnnotationTypes.ANNOTATION_TYPE_OBS_MH );
+					xmlDescriptivePsmAnnotation.setSearchProgram( Constants.PROGRAM_NAME );
+					xmlDescriptivePsmAnnotation.setValue( psm.getObsMH().toString() );
 				}
 
+				{
+					DescriptivePsmAnnotation xmlDescriptivePsmAnnotation = new DescriptivePsmAnnotation();
+					xmlDescriptivePsmAnnotations.getDescriptivePsmAnnotation().add( xmlDescriptivePsmAnnotation );
 
+					xmlDescriptivePsmAnnotation.setAnnotationName( PSMAnnotationTypes.ANNOTATION_TYPE_THEO_MH );
+					xmlDescriptivePsmAnnotation.setSearchProgram( Constants.PROGRAM_NAME );
+					xmlDescriptivePsmAnnotation.setValue( psm.getTheoMH().toString() );
+				}
 
 				// add in the mods for this psm
 				if( psm.getModifications() != null && psm.getModifications().keySet().size() > 0 ) {
@@ -263,7 +278,14 @@ public class XMLBuilder {
 						xmlPSMModifications.getPsmModification().add( xmlPSMModification );
 
 						xmlPSMModification.setMass( psm.getModifications().get( position ) );
-						xmlPSMModification.setPosition( new BigInteger( String.valueOf( position ) ) );
+
+						if(position == 0) {
+							xmlPSMModification.setIsNTerminal( true );
+						} else if(position == reportedPeptide.getNakedPeptide().length() + 1) {
+							xmlPSMModification.setIsCTerminal( true );
+						} else {
+							xmlPSMModification.setPosition(BigInteger.valueOf(position));
+						}
 					}
 				}
 

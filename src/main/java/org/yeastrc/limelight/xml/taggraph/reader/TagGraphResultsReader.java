@@ -1,6 +1,8 @@
 package org.yeastrc.limelight.xml.taggraph.reader;
 
 import com.opencsv.CSVReader;
+import org.python.core.PyObject;
+import org.python.util.PythonInterpreter;
 import org.yeastrc.limelight.xml.taggraph.objects.TagGraphPSM;
 import org.yeastrc.limelight.xml.taggraph.objects.TagGraphReportedPeptide;
 import org.yeastrc.limelight.xml.taggraph.objects.TagGraphResults;
@@ -14,10 +16,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -117,126 +116,85 @@ public class TagGraphResultsReader {
         psm.setCompositeScore(new BigDecimal(fields[14]));
 
         psm.setPeptideSequence(getPeptideSequenceForPSM(fields[18]));
-        psm.setModifications(getModsForPSM(fields, psm.getPeptideSequence()));
+        psm.setModifications(getModsForPSM(fields[20], psm.getPeptideSequence()));
 
         return psm;
     }
 
-    /**
-     * Return true if this string represents an amino acid sub. in the form of "phe->ala"
-     * @param modString
-     * @return
-     */
-    private boolean isAminoAcidSubstitution(String modString) {
-        Pattern p = Pattern.compile("^\\w{3}->\\w{3}$");
-        Matcher m = p.matcher(modString);
-        return m.matches();
-    }
 
-    /**
-     * Get the mass diff corresponding to the given amino acid substitution
-     * @param modString
-     * @return
-     * @throws Exception
-     */
-    private BigDecimal getAminoAcidSubstitutionMassShift(String modString) throws Exception {
-        String[] aminoAcids = modString.split("->");
-        if(aminoAcids.length != 2) {
-            throw new Exception("Got invalid syntax for amino acid subst.: " + modString);
-        }
-
-        AminoAcid startAminoAcid = AminoAcidUtils.getAminoAcidByAbbreviation(aminoAcids[0].toLowerCase());
-        AminoAcid endAminoAcid = AminoAcidUtils.getAminoAcidByAbbreviation(aminoAcids[1].toLowerCase());
-
-        if(startAminoAcid == null) {
-            throw new Exception("Could not find amino acid for: " + aminoAcids[0]);
-        }
-
-        if(endAminoAcid == null) {
-            throw new Exception("Could not find amino acid for: " + aminoAcids[1]);
-        }
-
-        double massDiff = endAminoAcid.getMass(MassUtils.MassType.MONOISOTOPIC) - startAminoAcid.getMass(MassUtils.MassType.MONOISOTOPIC);
-        return BigDecimal.valueOf(massDiff).setScale(4, RoundingMode.HALF_UP);
-    }
 
     /**
      * Get the dynamic mods reported for this PSM
      *
-     * @param fields
      * @param sequence
      * @return
      * @throws Exception
      */
-    private Map<Integer, BigDecimal> getModsForPSM(String[] fields, String sequence) throws Exception {
+    private Map<Integer, BigDecimal> getModsForPSM(String modString, String sequence) throws Exception {
 
-        final int startingIndex = 31;
         Map<Integer, BigDecimal> mods = new HashMap<>();
 
-        System.out.println(fields[18]);
-        System.out.println(fields[29]);
+        if(interp == null)
+            interp = new PythonInterpreter();
 
-        for(int i = startingIndex; i < fields.length; i += 4) {
+        PyObject x = interp.eval(modString);
+        List<List> modList = ((List)x);
 
-            // we're done reading mods
-            if(fields[i] == null || fields[i].length() < 1) {
-                break;
+        for(List individualModList : modList ) {
+            List<Object> modDefinition = (List)individualModList.get(0);
+            Double modMass = null;
+
+            try {
+                modMass = (Double) (modDefinition.get(1));
+            } catch(Exception e) {
+                modMass = Double.valueOf((Integer)(modDefinition.get(1)));
             }
 
-            int position = Integer.parseInt(fields[i]) + 1;
-
-            BigDecimal mass = null;
-
-            System.out.println(fields[i]);
-            System.out.println(fields[i+1]);
-            System.out.println(fields[i+2]);
-            System.out.println(fields[i+3]);
-            System.out.println(sequence + "\n");
-            if(!isAminoAcidSubstitution(fields[i+1]))
-                mass = new BigDecimal(fields[i+3]);
-            else
-                mass = getAminoAcidSubstitutionMassShift(fields[i+1]);
-
-            // don't include static mods
-            if(isStaticMod(position, mass, sequence))
+            if(modMass == 0.0) {
                 continue;
+            }
 
-            // handle N- and C-terminal mods
-            if(fields[i+2].equals("N-term")) {
+            int position = (Integer)(individualModList.get(2)) + 1; // convert to starts-with-1
+
+            if(isNTerminal(individualModList)) {
                 position = 0;
-            } else if(fields[i+2].equals("C-term")) {
+            }
+
+            if(isCTerminal(individualModList)) {
                 position = sequence.length() + 1;
             }
 
-            mods.put(position, mass);
+            mods.put(position, BigDecimal.valueOf(modMass).setScale(4, RoundingMode.HALF_UP));
         }
+
 
         return mods;
     }
 
-    private boolean isStaticMod(Integer position, BigDecimal mass, String sequence) throws Exception {
+    private boolean isNTerminal(List<Object> modDefinitionList) {
 
-        if(this.staticMods == null || this.staticMods.size() < 1) {
-            return false;
-        }
+        try {
+            List<Object> termDefinitionList = ((List)modDefinitionList.get(1));
+            String termDefinition = (String)(termDefinitionList.get(0));
+            if(termDefinition.equals("N-term")) {
+                return true;
+            }
+        } catch (Exception e) { ; }
 
-//        if(position == 0 || position == sequence.length() + 1) {
-//            return false;
-//        }
+        return false;
+    }
 
-        String moddedResidue = sequence.substring(position - 1, position);
+    private boolean isCTerminal(List<Object> modDefinitionList) {
 
-        if(!this.staticMods.containsKey(moddedResidue))
-            return false;
+        try {
+            List<Object> termDefinitionList = ((List)modDefinitionList.get(1));
+            String termDefinition = (String)(termDefinitionList.get(0));
+            if(termDefinition.equals("C-term")) {
+                return true;
+            }
+        } catch (Exception e) { ; }
 
-        BigDecimal mass1 = this.staticMods.get(moddedResidue).setScale(2, RoundingMode.HALF_UP);
-        BigDecimal mass2 = mass.setScale(2, RoundingMode.HALF_UP);
-
-        if(!mass1.equals(mass2)) {
-            return false;
-        }
-
-        return true;
+        return false;
     }
 
 
@@ -247,8 +205,8 @@ public class TagGraphResultsReader {
      */
     private String getPeptideSequenceForPSM(String peptideWithMods) {
 
-        peptideWithMods = peptideWithMods.replaceAll("^\\w\\.", "");
-        peptideWithMods = peptideWithMods.replaceAll("\\.\\w$", "");
+        peptideWithMods = peptideWithMods.replaceAll("^[\\w\\-]\\.", "");
+        peptideWithMods = peptideWithMods.replaceAll("\\.[\\w\\-]$", "");
 
         return peptideWithMods;
     }
@@ -270,6 +228,7 @@ public class TagGraphResultsReader {
     private boolean isDone = false;
     private boolean isClosed = false;
 
+    private PythonInterpreter interp;
     private File resultsFile;
     private Map<String, BigDecimal> staticMods;
     private Map<String, Collection<BigDecimal>> variableMods;

@@ -57,6 +57,15 @@ public class PSMAnnotationTypes {
 			
 			types.add( type );
 		}
+
+		{
+			FilterablePsmAnnotationType type = new FilterablePsmAnnotationType();
+			type.setName( ANNOTATION_TYPE_PPM );
+			type.setDescription( "PPM error" );
+			type.setFilterDirection( FilterDirectionType.BELOW );
+
+			types.add( type );
+		}
 		
 		{
 			FilterablePsmAnnotationType type = new FilterablePsmAnnotationType();

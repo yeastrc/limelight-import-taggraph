@@ -31,6 +31,7 @@ repositories {
 
 dependencies {
     compile 'org.apache.commons:commons-configuration2:2.4'
+    compile 'org.python:jython-standalone:2.7.2'
     compile 'org.yeastrc:yrc-fasta-utils:2.0.2'
     compile 'org.yeastrc:limelight-import-api:0.9.0'
     compile 'org.yeastrc:proteomics-utils:1.0.3'
