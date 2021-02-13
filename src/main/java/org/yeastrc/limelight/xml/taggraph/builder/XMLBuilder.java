@@ -12,6 +12,7 @@ import org.yeastrc.limelight.xml.taggraph.objects.ConversionParameters;
 import org.yeastrc.limelight.xml.taggraph.objects.TagGraphPSM;
 import org.yeastrc.limelight.xml.taggraph.objects.TagGraphReportedPeptide;
 import org.yeastrc.limelight.xml.taggraph.objects.TagGraphResults;
+import org.yeastrc.limelight.xml.taggraph.utils.MassUtils;
 
 import java.io.File;
 import java.math.BigDecimal;
@@ -174,6 +175,8 @@ public class XMLBuilder {
 				xmlPsm.setScanNumber(BigInteger.valueOf(psm.getScanNumber()));
 				xmlPsm.setPrecursorCharge( new BigInteger( String.valueOf( psm.getCharge() ) ) );
 				xmlPsm.setScanFileName(psm.getScanFilePrefix());
+				xmlPsm.setPrecursorMZ(MassUtils.getObservedMoverZForPsm(psm));
+				xmlPsm.setPrecursorRetentionTime(psm.getRetentionTime());
 
 				// add in the filterable PSM annotations (e.g., score)
 				FilterablePsmAnnotations xmlFilterablePsmAnnotations = new FilterablePsmAnnotations();

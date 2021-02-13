@@ -8,6 +8,7 @@ public class TagGraphPSM {
 
 	private BigDecimal obsMH;
 	private BigDecimal theoMH;
+	private BigDecimal retentionTime;
 	private BigDecimal ppm;
 	private BigDecimal fdr;
 	private BigDecimal emProbability;
@@ -28,6 +29,7 @@ public class TagGraphPSM {
 		return "TagGraphPSM{" +
 				"obsMH=" + obsMH +
 				", theoMH=" + theoMH +
+				", retentionTime=" + retentionTime +
 				", ppm=" + ppm +
 				", fdr=" + fdr +
 				", emProbability=" + emProbability +
@@ -170,5 +172,13 @@ public class TagGraphPSM {
 
 	public void setModifications(Map<Integer, BigDecimal> modifications) {
 		this.modifications = modifications;
+	}
+
+	public BigDecimal getRetentionTime() {
+		return retentionTime;
+	}
+
+	public void setRetentionTime(BigDecimal retentionTime) {
+		this.retentionTime = retentionTime;
 	}
 }

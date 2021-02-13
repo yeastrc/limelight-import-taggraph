@@ -99,6 +99,9 @@ public class TagGraphResultsReader {
         psm.setScanNumber(Integer.parseInt(ScanParsingUtils.getScanNumberFromScanF(fields[0])));
         psm.setCharge(Integer.parseInt(fields[1]));
 
+        BigDecimal retentionTime = BigDecimal.valueOf(Double.parseDouble(fields[2] ) * 60);	// rt is reported as minutes, we want seconds
+        psm.setRetentionTime(retentionTime);
+
         psm.setObsMH(new BigDecimal(fields[3]));
         psm.setTheoMH(new BigDecimal(fields[4]));
 
